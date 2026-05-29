@@ -342,6 +342,7 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
 #toast.show { opacity: 1; transform: translateY(0); }
 #toast.success { border-color: var(--green); }
 #toast.error { border-color: var(--accent); }
+#toast.version { border-color: var(--amber); background: var(--surface2); padding-right: 24px; }
 
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
 .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
@@ -530,6 +531,8 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
 <script>
 const CLOUDFLARE_PROXY = 'https://cshelper-proxy.zwhill.workers.dev';
 const STORAGE_KEY = 'dt-wiki-pages';
+const APP_VERSION = '1.0.0';
+const VERSION_URL = 'https://zwhill.github.io/DomesticTuning-Wiki/version.json';
 
 const BRANDS = ['DiabloSport','Edge Products','SuperChips','Range Technology','General'];
 const BRAND_COLORS = {
@@ -988,6 +991,44 @@ async function init() {
   await loadPages();
   showHome();
 }
+
+// ---- VERSION WATCHER ----
+let versionToastShown = false;
+async function checkVersion() {
+  try {
+    const r = await fetch(VERSION_URL + '?t=' + Date.now());
+    const data = await r.json();
+    if (data.version && data.version !== APP_VERSION && !versionToastShown) {
+      versionToastShown = true;
+      showVersionToast(data.version);
+    }
+  } catch(e) {}
+}
+function showVersionToast(newVer) {
+  const el = document.getElementById('toast');
+  el.innerHTML = `v${newVer} available — <a href="javascript:location.reload(true)" style="color:var(--accent2);font-weight:600">Reload</a>`;
+  el.className = 'show version';
+}
+setInterval(checkVersion, 60000);
+setTimeout(checkVersion, 5000);
+
+// ---- UNSAVED GUARD ----
+let hasUnsaved = false;
+document.addEventListener('input', e => {
+  if (['editor','edit-title','edit-subtitle','edit-brand'].includes(e.target.id)) hasUnsaved = true;
+});
+function clearUnsaved() { hasUnsaved = false; }
+window.addEventListener('beforeunload', e => {
+  if (hasUnsaved) { e.preventDefault(); e.returnValue = ''; }
+});
+const _origSave = savePage;
+savePage = async function() { await _origSave(); clearUnsaved(); };
+const _origCancel = cancelEdit;
+cancelEdit = function() {
+  if (hasUnsaved && !confirm('You have unsaved changes. Discard them?')) return;
+  clearUnsaved();
+  _origCancel();
+};
 
 init();
 </script>
