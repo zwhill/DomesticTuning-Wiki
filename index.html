@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domestic Tuning Wiki</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #181818;
+  --surface2: #222222;
+  --surface3: #2a2a2a;
+  --border: #333;
+  --border2: #444;
+  --text: #f0f0f0;
+  --text2: #aaa;
+  --text3: #666;
+  --accent: #E8201A;
+  --accent2: #ff4a44;
+  --accent-dim: rgba(232,32,26,0.12);
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --amber: #f59e0b;
+  --sidebar-w: 260px;
+  --header-h: 56px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; line-height: 1.6; overflow: hidden; }
+a { color: var(--accent2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+
+/* LAYOUT */
+#app { display: flex; flex-direction: column; height: 100vh; }
+#header {
+  height: var(--header-h); min-height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px;
+  z-index: 100;
+}
+#header .logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text); white-space: nowrap;
+}
+#header .logo span { color: var(--accent); }
+#header .search-wrap { flex: 1; max-width: 400px; position: relative; }
+#header .search-wrap input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 12px 6px 34px;
+  border-radius: 6px; font-size: 13px; outline: none;
+}
+#header .search-wrap input:focus { border-color: var(--border2); }
+#header .search-wrap .sicon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); font-size: 15px; pointer-events: none;
+}
+#header .hactions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+#header .hbtn {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); padding: 6px 12px; border-radius: 6px;
+  font-size: 13px; font-family: 'Barlow', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+  transition: border-color 0.15s, color 0.15s;
+}
+#header .hbtn:hover { border-color: var(--border2); color: var(--text); }
+#header .hbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+#header .hbtn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#sidebar-inner { flex: 1; overflow-y: auto; padding: 8px 0 16px; }
+#sidebar-inner::-webkit-scrollbar { width: 4px; }
+#sidebar-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.brand-section { margin-bottom: 4px; }
+.brand-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3);
+  user-select: none; transition: color 0.15s;
+}
+.brand-header:hover { color: var(--text2); }
+.brand-header .bchev { font-size: 12px; transition: transform 0.2s; }
+.brand-header.open .bchev { transform: rotate(90deg); }
+.brand-pages { display: none; }
+.brand-pages.open { display: block; }
+.page-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 14px 5px 24px;
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.page-item:hover { color: var(--text); background: var(--surface2); }
+.page-item.active { color: var(--text); border-left-color: var(--accent); background: var(--accent-dim); font-weight: 500; }
+.page-item .pi-icon { font-size: 13px; color: var(--text3); flex-shrink: 0; }
+.page-item.active .pi-icon { color: var(--accent); }
+
+.sidebar-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sidebar-footer button {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 5px;
+  font-size: 12px; color: var(--text3); width: 100%;
+  text-align: left; transition: color 0.15s, background 0.15s;
+}
+.sidebar-footer button:hover { color: var(--text); background: var(--surface2); }
+.sidebar-footer button svg { flex-shrink: 0; }
+
+/* MAIN */
+#main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+#content { flex: 1; overflow-y: auto; padding: 32px 48px 80px; max-width: 860px; }
+#content::-webkit-scrollbar { width: 6px; }
+#content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* VIEW MODE */
+#view-mode .page-meta {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+}
+#view-mode .page-meta .brand-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 3px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(232,32,26,0.25);
+}
+#view-mode .page-meta .page-date { font-size: 12px; color: var(--text3); }
+#view-mode h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 34px; font-weight: 700; line-height: 1.15;
+  letter-spacing: 0.01em; margin-bottom: 6px;
+}
+#view-mode .page-subtitle { font-size: 15px; color: var(--text2); margin-bottom: 24px; }
+#view-mode .page-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 28px; }
+.wiki-body { font-size: 15px; line-height: 1.75; color: var(--text); }
+.wiki-body h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 700; letter-spacing: 0.02em;
+  margin: 28px 0 10px; color: var(--text);
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.wiki-body h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+.wiki-body p { margin-bottom: 14px; }
+.wiki-body ul, .wiki-body ol { margin: 0 0 14px 20px; }
+.wiki-body li { margin-bottom: 4px; }
+.wiki-body code {
+  font-family: 'Courier New', monospace; font-size: 13px;
+  background: var(--surface2); padding: 1px 5px;
+  border-radius: 3px; color: var(--accent2);
+}
+.wiki-body pre {
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 14px 16px; border-radius: 6px; overflow-x: auto; margin-bottom: 16px;
+}
+.wiki-body pre code { background: none; padding: 0; color: var(--text2); }
+.wiki-body blockquote {
+  border-left: 3px solid var(--accent); padding: 6px 16px;
+  color: var(--text2); margin: 0 0 14px; background: var(--accent-dim); border-radius: 0 4px 4px 0;
+}
+.wiki-body table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px; }
+.wiki-body th { background: var(--surface2); color: var(--text); font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid var(--border); }
+.wiki-body td { padding: 7px 12px; border: 1px solid var(--border); color: var(--text2); }
+.wiki-body tr:hover td { background: var(--surface2); }
+.wiki-body img { max-width: 100%; border-radius: 6px; border: 1px solid var(--border); margin: 8px 0; }
+.wiki-body a { color: var(--accent2); }
+
+.page-actions { display: flex; gap: 8px; margin-top: 28px; }
+.page-actions button {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 6px; font-size: 13px;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  font-family: 'Barlow', sans-serif; transition: all 0.15s;
+}
+.page-actions button:hover { border-color: var(--border2); color: var(--text); }
+.page-actions button.danger:hover { border-color: var(--accent); color: var(--accent); }
+
+/* EDIT MODE */
+#edit-mode { display: none; }
+.edit-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.edit-header h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; }
+.edit-header select, .edit-header input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px; outline: none;
+}
+.edit-header select:focus, .edit-header input:focus { border-color: var(--border2); }
+.edit-field { margin-bottom: 14px; }
+.edit-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 5px; }
+.edit-field input, .edit-field select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
+}
+.edit-field input:focus, .edit-field select:focus { border-color: var(--border2); }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-bottom: none; border-radius: 6px 6px 0 0;
+}
+.toolbar button {
+  padding: 4px 8px; border-radius: 4px; font-size: 13px; color: var(--text2);
+  font-family: 'Barlow', sans-serif; transition: all 0.1s; min-width: 28px;
+}
+.toolbar button:hover { background: var(--surface3); color: var(--text); }
+.toolbar .tsep { width: 1px; background: var(--border); margin: 2px 4px; }
+#editor {
+  width: 100%; min-height: 400px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 14px 16px;
+  border-radius: 0 0 6px 6px; font-size: 14px; line-height: 1.75;
+  outline: none; resize: vertical; font-family: 'Barlow', sans-serif;
+}
+.edit-actions { display: flex; gap: 8px; margin-top: 14px; }
+.edit-actions button {
+  padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  font-family: 'Barlow', sans-serif; transition: all 0.15s;
+}
+.btn-save { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-save:hover { background: var(--accent2); }
+.btn-cancel { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+.format-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+.format-hint strong { color: var(--text3); }
+
+/* SEARCH RESULTS */
+#search-results { display: none; }
+#search-results h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+.result-item {
+  padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s;
+}
+.result-item:hover { border-color: var(--border2); }
+.result-item h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+.result-item p { font-size: 13px; color: var(--text2); }
+.result-item .rtag {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 4px;
+}
+mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2px; padding: 0 1px; }
+
+/* HOME */
+#home-view { display: none; }
+.home-brand-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.brand-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color 0.15s;
+}
+.brand-card:hover { border-color: var(--border2); }
+.brand-card h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.brand-card p { font-size: 12px; color: var(--text3); }
+.brand-card .count { font-size: 24px; font-weight: 300; color: var(--accent); margin-bottom: 2px; }
+.recent-list h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.recent-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: 6px; cursor: pointer; transition: background 0.15s;
+}
+.recent-item:hover { background: var(--surface2); }
+.recent-item .ri-brand { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); text-transform: uppercase; min-width: 90px; }
+.recent-item .ri-title { font-size: 13px; color: var(--text2); flex: 1; }
+.recent-item .ri-date { font-size: 12px; color: var(--text3); }
+
+/* AI PANEL */
+#ai-panel {
+  width: 0; min-width: 0; background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden; transition: width 0.25s ease, min-width 0.25s ease;
+}
+#ai-panel.open { width: 340px; min-width: 340px; }
+#ai-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+#ai-header h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+#ai-header .ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+#ai-close { color: var(--text3); font-size: 18px; padding: 2px 6px; }
+#ai-close:hover { color: var(--text); }
+#ai-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+#ai-messages::-webkit-scrollbar { width: 4px; }
+#ai-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.ai-msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+.ai-msg.user { background: var(--accent-dim); border: 1px solid rgba(232,32,26,0.2); color: var(--text); margin-left: 20px; }
+.ai-msg.assistant { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); margin-right: 20px; }
+.ai-msg.assistant strong { color: var(--text); }
+.ai-msg.thinking { color: var(--text3); font-style: italic; }
+#ai-input-row { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+#ai-input {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none;
+  resize: none; line-height: 1.5; min-height: 36px; max-height: 100px; font-family: inherit;
+}
+#ai-input:focus { border-color: var(--border2); }
+#ai-send {
+  background: var(--accent); color: #fff; padding: 8px 12px;
+  border-radius: 6px; font-size: 13px; flex-shrink: 0; align-self: flex-end;
+  transition: background 0.15s;
+}
+#ai-send:hover { background: var(--accent2); }
+
+/* MODAL */
+#modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200;
+}
+#modal-overlay.open { display: flex; }
+#modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 24px; width: 420px; max-width: 90vw;
+}
+#modal h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+#modal p { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+#modal .mactions { display: flex; gap: 8px; justify-content: flex-end; }
+#modal .mactions button { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.15s; }
+.mbtn-confirm { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.mbtn-cancel { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.mbtn-cancel:hover { border-color: var(--border2); }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); padding: 10px 18px; border-radius: 8px;
+  font-size: 13px; z-index: 300; opacity: 0; transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.success { border-color: var(--green); }
+#toast.error { border-color: var(--accent); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state svg { margin-bottom: 12px; opacity: 0.3; }
+.empty-state h3 { font-size: 18px; color: var(--text2); margin-bottom: 6px; }
+.empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div class="logo" onclick="showHome()" style="cursor:pointer">
+      DOMESTIC <span>TUNING</span> <span style="color:var(--text3);font-weight:300">WIKI</span>
+    </div>
+    <div class="search-wrap">
+      <span class="sicon">&#9906;</span>
+      <input id="global-search" type="text" placeholder="Search pages..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
+    </div>
+    <div class="hactions">
+      <button class="hbtn" onclick="toggleAI()">&#128161; Ask AI</button>
+      <button class="hbtn primary" onclick="newPage()">+ New Page</button>
+    </div>
+  </div>
+
+  <div id="body">
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div id="sidebar-inner"></div>
+      <div class="sidebar-footer">
+        <button onclick="showHome()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+          Home
+        </button>
+        <button onclick="exportWiki()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
+          Export JSON
+        </button>
+        <button onclick="importWiki()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21V9m0 0l-4 4m4-4l4 4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
+          Import JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div id="main">
+      <div id="content">
+
+        <!-- HOME -->
+        <div id="home-view">
+          <div style="margin-bottom:28px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;margin-bottom:4px">
+              Welcome to the Wiki
+            </div>
+            <div style="color:var(--text2);font-size:15px">Internal knowledge base for DiabloSport, Edge, SuperChips &amp; Range Technology.</div>
+          </div>
+          <div class="home-brand-grid" id="brand-grid"></div>
+          <div class="recent-list">
+            <h2>Recently Updated</h2>
+            <div id="recent-list-inner"></div>
+          </div>
+        </div>
+
+        <!-- VIEW -->
+        <div id="view-mode">
+          <div class="page-meta">
+            <span class="brand-tag" id="view-brand"></span>
+            <span class="page-date" id="view-date"></span>
+          </div>
+          <h1 id="view-title"></h1>
+          <div class="page-subtitle" id="view-subtitle"></div>
+          <hr class="page-divider">
+          <div class="wiki-body" id="view-body"></div>
+          <div class="page-actions">
+            <button onclick="editCurrentPage()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit Page
+            </button>
+            <button class="danger" onclick="confirmDelete()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m5 0V4h4v2"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <!-- EDIT -->
+        <div id="edit-mode">
+          <div class="edit-header">
+            <h2 id="edit-mode-title">New Page</h2>
+          </div>
+          <div class="edit-field">
+            <label>Brand</label>
+            <select id="edit-brand">
+              <option value="DiabloSport">DiabloSport</option>
+              <option value="Edge Products">Edge Products</option>
+              <option value="SuperChips">SuperChips</option>
+              <option value="Range Technology">Range Technology</option>
+              <option value="General">General / All Brands</option>
+            </select>
+          </div>
+          <div class="edit-field">
+            <label>Page Title</label>
+            <input id="edit-title" type="text" placeholder="e.g. Trinity 2 Troubleshooting Guide">
+          </div>
+          <div class="edit-field">
+            <label>Subtitle (optional)</label>
+            <input id="edit-subtitle" type="text" placeholder="Brief description">
+          </div>
+          <div class="edit-field">
+            <label>Content</label>
+            <div class="toolbar">
+              <button onclick="fmt('bold')" title="Bold"><b>B</b></button>
+              <button onclick="fmt('italic')" title="Italic"><i>I</i></button>
+              <button onclick="insertMarkdown('## ', '')" title="Heading 2">H2</button>
+              <button onclick="insertMarkdown('### ', '')" title="Heading 3">H3</button>
+              <div class="tsep"></div>
+              <button onclick="insertMarkdown('- ', '')" title="Bullet list">&#8226; List</button>
+              <button onclick="insertMarkdown('1. ', '')" title="Numbered list">1. List</button>
+              <div class="tsep"></div>
+              <button onclick="insertMarkdown('`', '`')" title="Inline code">Code</button>
+              <button onclick="insertBlock('```\n', '\n```')" title="Code block">Block</button>
+              <button onclick="insertMarkdown('> ', '')" title="Blockquote">Quote</button>
+              <div class="tsep"></div>
+              <button onclick="insertTable()" title="Insert table">Table</button>
+              <button onclick="insertMarkdown('[Link Text](', 'https://url)')" title="Link">Link</button>
+            </div>
+            <textarea id="editor" placeholder="Write your page content here using Markdown...&#10;&#10;## Section Heading&#10;Your text here.&#10;&#10;### Sub-section&#10;More content."></textarea>
+          </div>
+          <div class="format-hint">
+            Supports Markdown: <strong>**bold**</strong>, <strong>*italic*</strong>, <strong>## Heading</strong>, <strong>`code`</strong>, <strong>- bullets</strong>, <strong>&gt; blockquote</strong>
+          </div>
+          <div class="edit-actions">
+            <button class="btn-save" onclick="savePage()">Save Page</button>
+            <button class="btn-cancel" onclick="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- SEARCH RESULTS -->
+        <div id="search-results">
+          <h2 id="search-title"></h2>
+          <div id="results-list"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- AI PANEL -->
+    <div id="ai-panel">
+      <div id="ai-header">
+        <div class="ai-dot"></div>
+        <h3>Wiki AI</h3>
+        <button id="ai-close" onclick="toggleAI()">&#10005;</button>
+      </div>
+      <div id="ai-messages">
+        <div class="ai-msg assistant">
+          Hey! I'm your Wiki AI. Ask me anything about DiabloSport, Edge, SuperChips, or Range Technology — or ask me to help write a new wiki page.
+        </div>
+      </div>
+      <div id="ai-input-row">
+        <textarea id="ai-input" placeholder="Ask anything..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+        <button id="ai-send" onclick="sendAI()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h3 id="modal-title">Confirm Delete</h3>
+    <p id="modal-body">Are you sure you want to delete this page? This cannot be undone.</p>
+    <div class="mactions">
+      <button class="mbtn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="mbtn-confirm" id="modal-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT -->
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(this)">
+<div id="toast"></div>
+
+<script>
+const CLOUDFLARE_PROXY = 'https://cshelper-proxy.zwhill.workers.dev';
+const STORAGE_KEY = 'dt-wiki-pages';
+
+const BRANDS = ['DiabloSport','Edge Products','SuperChips','Range Technology','General'];
+const BRAND_COLORS = {
+  'DiabloSport':'#E8201A','Edge Products':'#0ea5e9',
+  'SuperChips':'#f59e0b','Range Technology':'#22c55e','General':'#8b5cf6'
+};
+const BRAND_DESCS = {
+  'DiabloSport':'Programmers & tuning devices',
+  'Edge Products':'Monitors & performance',
+  'SuperChips':'Flashpaq & tuners',
+  'Range Technology':'AFM/DFM tech',
+  'General':'Cross-brand resources'
+};
+
+let pages = [];
+let currentPageId = null;
+let editingPageId = null;
+let aiOpen = false;
+let aiContext = '';
+
+// ---- STORAGE ----
+async function loadPages() {
+  try {
+    const r = await window.storage.get(STORAGE_KEY);
+    if (r && r.value) pages = JSON.parse(r.value);
+  } catch(e) {
+    pages = getSeedPages();
+    await savePages();
+  }
+  if (!pages || pages.length === 0) {
+    pages = getSeedPages();
+    await savePages();
+  }
+}
+
+async function savePages() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(pages));
+  } catch(e) { console.error('Storage save failed', e); }
+}
+
+function getSeedPages() {
+  return [
+    {
+      id: uid(), brand: 'DiabloSport', title: 'Trinity 2 Overview',
+      subtitle: 'Product summary and feature list',
+      body: `## What is the Trinity 2?\n\nThe Trinity 2 (T2) is DiabloSport's flagship tuner and monitor for domestic vehicles. It provides performance tuning, real-time data monitoring, and diagnostic capabilities in one device.\n\n## Key Features\n\n- **Touch screen display** — 2.8\" color touchscreen with intuitive interface\n- **Custom tuning** — Load pre-loaded DiabloSport tunes or upload custom tunes from a licensed tuner\n- **Data logging** — Log up to 20 PIDs simultaneously at configurable sample rates\n- **DTC codes** — Read and clear diagnostic trouble codes\n- **Drag racing tools** — 0-60, 1/8 mile, 1/4 mile timing\n\n## Supported Platforms\n\n| Platform | Years | Notes |\n|---|---|---|\n| GM LS (Gen IV) | 2007–2014 | OBDII port required |\n| Dodge HEMI | 2009–2021 | Full support |\n| Ford Modular | 2011–2020 | Tune unlock required |\n\n## Getting Started\n\n1. Connect the T2 to the OBDII port under the dash\n2. Follow the on-screen setup wizard\n3. Apply a pre-loaded tune or contact your tuner\n\n> **Note:** Always return the vehicle to stock tune before taking it to a dealership for service.`,
+      updated: new Date().toISOString()
+    },
+    {
+      id: uid(), brand: 'DiabloSport', title: 'Common Error Codes',
+      subtitle: 'Troubleshooting guide for device errors',
+      body: `## Error Code Reference\n\nThis page covers the most common error codes seen on DiabloSport devices and how to resolve them.\n\n### E001 – Vehicle Not Supported\n\nThe device does not have a calibration file for the detected vehicle. \n\n**Resolution:** Verify the vehicle year/make/model matches the purchased device. Contact technical support to request a calibration if the vehicle should be supported.\n\n### E002 – Write Failure\n\nThe tune write to the ECU was interrupted or failed.\n\n**Resolution:** \n1. Ensure the battery is fully charged (12.6V minimum)\n2. Do not start the vehicle during the write process\n3. Retry the tune write\n\n### E003 – Device Locked\n\nThe device is locked to another vehicle and cannot be used on a different VIN without unlocking.\n\n**Resolution:** Contact DiabloSport support with proof of purchase. A $50 unlock fee may apply.`,
+      updated: new Date().toISOString()
+    },
+    {
+      id: uid(), brand: 'Edge Products', title: 'Insight CTS3 Quick Start',
+      subtitle: 'Setup and first-use guide',
+      body: `## CTS3 Insight Monitor Setup\n\nThe Edge Insight CTS3 is a standalone data monitor and gauge display. Unlike tuning products, it does not modify ECU calibrations.\n\n## Installation\n\n1. Plug the OBD-II cable into the vehicle's port (typically under the dash, driver's side)\n2. Route the cable to your desired mount location\n3. Power on — the device will auto-detect the vehicle protocol\n\n## Setting Up Gauges\n\nThe CTS3 supports up to 8 configurable gauge screens.\n\n- Tap **Settings → Gauges** to add/remove PIDs\n- Long press any gauge to edit its display range and alert thresholds\n- Use **drag to reorder** to arrange your layout\n\n## Popular PID Configurations\n\n| PID | Recommended Alert |\n|---|---|\n| Engine Coolant Temp | > 220°F |\n| Trans Fluid Temp | > 240°F |\n| Boost Pressure | Varies by tune |\n| AFR (wideband) | < 12.0 or > 15.5 |\n\n## Firmware Updates\n\nConnect the CTS3 to a PC using the included USB cable and launch the **Edge Device Manager** software to check for updates.`,
+      updated: new Date().toISOString()
+    },
+    {
+      id: uid(), brand: 'SuperChips', title: 'Flashpaq F5 FAQ',
+      subtitle: 'Frequently asked questions',
+      body: `## Flashpaq F5 — Frequently Asked Questions\n\n### Q: Can I use one Flashpaq on multiple vehicles?\n\nNo. The Flashpaq F5 locks to the first vehicle it programs. It can be used on a second vehicle only after it is returned to the original vehicle's stock tune and then unlocked through SuperChips support.\n\n### Q: Will the F5 void my warranty?\n\nThe Magnuson-Moss Warranty Act prevents a dealer from voiding your warranty solely because you used an aftermarket part. However, if a dealer can prove a tune contributed to a specific failure, they may deny that specific claim. Always return to stock before warranty service.\n\n### Q: What is the difference between the 91 and 93 octane tunes?\n\nHigher octane tunes advance ignition timing more aggressively, producing more power but requiring higher octane fuel to prevent knock. Never run a 93-octane tune on 87 octane fuel.\n\n### Q: My device says "Vehicle Already Programmed" — what do I do?\n\nThis means the ECU was previously tuned and not returned to stock before the F5 attempted to write. Use a known-good stock file or contact support for recovery options.\n\n### Q: How do I update the device?\n\nDownload **SuperChips Updater** from superchips.com, connect via USB, and follow the on-screen prompts.`,
+      updated: new Date().toISOString()
+    },
+    {
+      id: uid(), brand: 'Range Technology', title: 'AFM/DFM Disabler Overview',
+      subtitle: 'How the disabler works and supported vehicles',
+      body: `## What Does the AFM/DFM Disabler Do?\n\nRange Technology's disabler prevents the engine from entering Active Fuel Management (AFM) or Dynamic Fuel Management (DFM) mode — the cylinder deactivation systems used by GM to improve highway fuel economy.\n\n## Why Disable AFM/DFM?\n\nWhile AFM/DFM improves fuel economy, many owners experience:\n\n- **Lifter failures** — Especially common on Gen V LT engines (5.3L, 6.2L) due to the constant cycling of lifters\n- **Oil consumption** — AFM cylinders can contribute to elevated oil burn\n- **Vibration** — Some drivers notice NVH on cylinder deactivation\n\n## How It Works\n\nThe Range disabler plugs into the OBDII port and sends a continuous signal telling the ECM that AFM/DFM is not available. **It does not modify the ECU calibration** — no tune write occurs.\n\nThis means:\n- ✓ No VIN lock\n- ✓ Can be unplugged at any time\n- ✓ Invisible to dealer scan tools\n- ✓ Does not affect emissions readiness monitors (in most cases)\n\n## Supported Vehicles\n\nCurrently supports GM vehicles with AFM or DFM equipped engines from 2007–2024. See the Range Technology website for the full compatibility list by year/make/model/engine.\n\n> **Note:** DFM (Dynamic Fuel Management, 2019+) uses a more complex 17-pattern cylinder deactivation system and requires Range's V2 disabler or the active version.`,
+      updated: new Date().toISOString()
+    },
+    {
+      id: uid(), brand: 'General', title: 'CS Escalation Process',
+      subtitle: 'When and how to escalate to engineering',
+      body: `## Customer Support Escalation Guide\n\nThis page documents the standard process for escalating customer issues that cannot be resolved at the CS tier.\n\n## Escalation Criteria\n\nEscalate to engineering when:\n\n- Device is bricked or unresponsive after a failed tune write\n- Customer reports an issue on a supported vehicle that affects multiple customers\n- A calibration file appears to be causing consistent drivability issues\n- The customer has a vehicle with a unique ECU variant not in the database\n\n## Escalation Steps\n\n1. **Document the case** — VIN, device serial number, software version, exact error message, and what the customer already tried\n2. **Capture logs** — Ask the customer to pull device logs (Settings → Support → Export Logs) and email them to support@[brand].com\n3. **Submit in Jira** — Create a ticket in the CS → Engineering queue with the tag `[ESCALATION]`\n4. **Set customer expectations** — Let the customer know 2–3 business day turnaround for engineering review\n5. **Follow up** — Check the Jira ticket daily and update the customer proactively\n\n## Contact\n\nFor urgent bricked-device situations (customer has vehicle at shop), use the #engineering-urgent Slack channel for same-day response.`,
+      updated: new Date().toISOString()
+    }
+  ];
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ---- SIDEBAR ----
+function renderSidebar() {
+  const container = document.getElementById('sidebar-inner');
+  container.innerHTML = '';
+  BRANDS.forEach(brand => {
+    const brandPages = pages.filter(p => p.brand === brand);
+    if (brandPages.length === 0) return;
+    const open = brandPages.some(p => p.id === currentPageId);
+    const sec = document.createElement('div');
+    sec.className = 'brand-section';
+    sec.innerHTML = `
+      <div class="brand-header ${open ? 'open' : ''}" onclick="toggleBrand(this)">
+        <span style="color:${BRAND_COLORS[brand] || '#aaa'}">${brand.toUpperCase()}</span>
+        <span class="bchev">&#9654;</span>
+      </div>
+      <div class="brand-pages ${open ? 'open' : ''}">
+        ${brandPages.map(p => `
+          <div class="page-item ${p.id === currentPageId ? 'active' : ''}" onclick="loadPage('${p.id}')">
+            <svg class="pi-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            ${escHtml(p.title)}
+          </div>`).join('')}
+      </div>`;
+    container.appendChild(sec);
+  });
+}
+
+function toggleBrand(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ---- HOME ----
+function showHome() {
+  currentPageId = null;
+  clearSearch();
+  show('home-view');
+  renderHome();
+  renderSidebar();
+}
+
+function renderHome() {
+  const grid = document.getElementById('brand-grid');
+  grid.innerHTML = BRANDS.map(b => {
+    const count = pages.filter(p => p.brand === b).length;
+    if (count === 0) return '';
+    return `<div class="brand-card" onclick="filterBrand('${b}')">
+      <div class="count">${count}</div>
+      <h3 style="color:${BRAND_COLORS[b] || '#aaa'}">${b}</h3>
+      <p>${BRAND_DESCS[b] || ''}</p>
+    </div>`;
+  }).join('');
+
+  const sorted = [...pages].sort((a, b) => new Date(b.updated) - new Date(a.updated)).slice(0, 8);
+  document.getElementById('recent-list-inner').innerHTML = sorted.map(p => `
+    <div class="recent-item" onclick="loadPage('${p.id}')">
+      <span class="ri-brand" style="color:${BRAND_COLORS[p.brand] || '#aaa'}">${p.brand}</span>
+      <span class="ri-title">${escHtml(p.title)}</span>
+      <span class="ri-date">${fmtDate(p.updated)}</span>
+    </div>`).join('');
+}
+
+function filterBrand(brand) {
+  const brandPages = pages.filter(p => p.brand === brand);
+  if (brandPages.length > 0) loadPage(brandPages[0].id);
+}
+
+// ---- PAGE VIEW ----
+function loadPage(id) {
+  const page = pages.find(p => p.id === id);
+  if (!page) return;
+  currentPageId = id;
+  aiContext = `Current page: "${page.title}" (${page.brand})\n\n${page.body}`;
+  clearSearch();
+  show('view-mode');
+  document.getElementById('view-brand').textContent = page.brand;
+  document.getElementById('view-brand').style.color = BRAND_COLORS[page.brand] || 'var(--accent)';
+  document.getElementById('view-date').textContent = 'Updated ' + fmtDate(page.updated);
+  document.getElementById('view-title').textContent = page.title;
+  document.getElementById('view-subtitle').textContent = page.subtitle || '';
+  document.getElementById('view-body').innerHTML = mdToHtml(page.body);
+  renderSidebar();
+}
+
+// ---- EDIT ----
+function newPage() {
+  editingPageId = null;
+  document.getElementById('edit-mode-title').textContent = 'New Page';
+  document.getElementById('edit-brand').value = 'DiabloSport';
+  document.getElementById('edit-title').value = '';
+  document.getElementById('edit-subtitle').value = '';
+  document.getElementById('editor').value = '';
+  show('edit-mode');
+}
+
+function editCurrentPage() {
+  const page = pages.find(p => p.id === currentPageId);
+  if (!page) return;
+  editingPageId = currentPageId;
+  document.getElementById('edit-mode-title').textContent = 'Edit Page';
+  document.getElementById('edit-brand').value = page.brand;
+  document.getElementById('edit-title').value = page.title;
+  document.getElementById('edit-subtitle').value = page.subtitle || '';
+  document.getElementById('editor').value = page.body;
+  show('edit-mode');
+}
+
+async function savePage() {
+  const brand = document.getElementById('edit-brand').value;
+  const title = document.getElementById('edit-title').value.trim();
+  const subtitle = document.getElementById('edit-subtitle').value.trim();
+  const body = document.getElementById('editor').value;
+  if (!title) { toast('Title is required', 'error'); return; }
+  if (editingPageId) {
+    const idx = pages.findIndex(p => p.id === editingPageId);
+    if (idx >= 0) { pages[idx] = { ...pages[idx], brand, title, subtitle, body, updated: new Date().toISOString() }; }
+    currentPageId = editingPageId;
+  } else {
+    const newP = { id: uid(), brand, title, subtitle, body, updated: new Date().toISOString() };
+    pages.push(newP);
+    currentPageId = newP.id;
+  }
+  await savePages();
+  loadPage(currentPageId);
+  toast('Page saved ✓', 'success');
+}
+
+function cancelEdit() {
+  if (currentPageId) loadPage(currentPageId);
+  else showHome();
+}
+
+// ---- DELETE ----
+function confirmDelete() {
+  document.getElementById('modal-title').textContent = 'Delete Page';
+  document.getElementById('modal-body').textContent = 'Are you sure? This cannot be undone.';
+  document.getElementById('modal-confirm').onclick = async () => {
+    pages = pages.filter(p => p.id !== currentPageId);
+    await savePages();
+    currentPageId = null;
+    closeModal();
+    showHome();
+    toast('Page deleted');
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ---- SEARCH ----
+function handleSearch(q) {
+  if (!q.trim()) { clearSearch(); return; }
+  const term = q.toLowerCase();
+  const results = pages.filter(p =>
+    p.title.toLowerCase().includes(term) ||
+    (p.subtitle||'').toLowerCase().includes(term) ||
+    p.body.toLowerCase().includes(term)
+  );
+  show('search-results');
+  document.getElementById('search-title').textContent = `${results.length} result${results.length!==1?'s':''} for "${q}"`;
+  document.getElementById('results-list').innerHTML = results.length ? results.map(p => {
+    const snippet = getSnippet(p.body, term);
+    return `<div class="result-item" onclick="loadPage('${p.id}')">
+      <div class="rtag">${p.brand}</div>
+      <h3>${highlight(escHtml(p.title), q)}</h3>
+      <p>${highlight(snippet, q)}</p>
+    </div>`;
+  }).join('') : '<div class="empty-state"><p>No pages matched your search.</p></div>';
+}
+
+function clearSearch() {
+  document.getElementById('global-search').value = '';
+}
+
+function getSnippet(body, term) {
+  const idx = body.toLowerCase().indexOf(term);
+  if (idx < 0) return escHtml(body.slice(0, 120)) + '...';
+  const start = Math.max(0, idx - 60);
+  return (start > 0 ? '...' : '') + escHtml(body.slice(start, idx + term.length + 80)) + '...';
+}
+
+function highlight(text, term) {
+  if (!term) return text;
+  return text.replace(new RegExp(escRegex(term), 'gi'), m => `<mark>${m}</mark>`);
+}
+
+// ---- AI ----
+function toggleAI() {
+  aiOpen = !aiOpen;
+  document.getElementById('ai-panel').classList.toggle('open', aiOpen);
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  input.style.height = 'auto';
+  appendAIMsg(q, 'user');
+  const thinking = appendAIMsg('Thinking...', 'assistant thinking');
+
+  const allContent = pages.map(p => `[${p.brand}] ${p.title}\n${p.body}`).join('\n\n---\n\n');
+  const systemPrompt = `You are an internal wiki assistant for Domestic Tuning — a business unit covering DiabloSport, Edge Products, SuperChips, and Range Technology. You help the team find information and draft wiki content.
+
+Here is the full wiki content:
+${allContent}
+
+${aiContext ? 'Currently viewing: ' + aiContext : ''}
+
+Answer questions clearly and concisely. If asked to write a wiki page, format the content in Markdown with ## headings and proper structure. If the information isn't in the wiki, say so and offer to help create a new page.`;
+
+  try {
+    const res = await fetch(CLOUDFLARE_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target: 'https://api.anthropic.com/v1/messages',
+        payload: {
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: q }]
+        }
+      })
+    });
+    const data = await res.json();
+    const text = data?.content?.[0]?.text || 'No response received.';
+    thinking.remove();
+    appendAIMsg(text, 'assistant');
+  } catch(e) {
+    thinking.remove();
+    appendAIMsg('Connection error. Check that the Cloudflare Worker is running.', 'assistant');
+  }
+}
+
+function appendAIMsg(text, cls) {
+  const msgs = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + cls;
+  div.innerHTML = cls.includes('assistant') && !cls.includes('thinking') ? mdToHtml(text) : escHtml(text);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// ---- EXPORT / IMPORT ----
+function exportWiki() {
+  const blob = new Blob([JSON.stringify(pages, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `dt-wiki-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Exported ✓', 'success');
+}
+
+function importWiki() { document.getElementById('import-input').click(); }
+
+async function handleImport(input) {
+  const file = input.files[0]; if (!file) return;
+  const text = await file.text();
+  try {
+    const imported = JSON.parse(text);
+    if (!Array.isArray(imported)) throw new Error('Invalid format');
+    pages = imported;
+    await savePages();
+    showHome();
+    toast(`Imported ${pages.length} pages ✓`, 'success');
+  } catch(e) { toast('Import failed: invalid JSON', 'error'); }
+  input.value = '';
+}
+
+// ---- TOOLBAR HELPERS ----
+function fmt(cmd) { document.getElementById('editor').focus(); document.execCommand(cmd); }
+
+function insertMarkdown(before, after) {
+  const ta = document.getElementById('editor');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end);
+  const ins = before + sel + after;
+  ta.value = ta.value.slice(0, start) + ins + ta.value.slice(end);
+  ta.selectionStart = start + before.length;
+  ta.selectionEnd = start + before.length + sel.length;
+  ta.focus();
+}
+
+function insertBlock(before, after) {
+  const ta = document.getElementById('editor');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.slice(start, end);
+  const ins = '\n' + before + sel + after + '\n';
+  ta.value = ta.value.slice(0, start) + ins + ta.value.slice(end);
+  ta.selectionStart = start + before.length + 1;
+  ta.selectionEnd = start + before.length + sel.length + 1;
+  ta.focus();
+}
+
+function insertTable() {
+  const tbl = '\n| Column 1 | Column 2 | Column 3 |\n|---|---|---|\n| Row 1 | Data | Data |\n| Row 2 | Data | Data |\n';
+  const ta = document.getElementById('editor');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0, pos) + tbl + ta.value.slice(pos);
+  ta.focus();
+}
+
+// ---- MARKDOWN ----
+function mdToHtml(md) {
+  if (!md) return '';
+  let h = escHtml(md);
+  // code blocks first
+  h = h.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.trim()}</code></pre>`);
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // headings
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+  // bold/italic
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // blockquote
+  h = h.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  // links
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+  // checkboxes
+  h = h.replace(/^- \[x\] (.+)$/gm, '<li style="list-style:none">✅ $1</li>');
+  h = h.replace(/^- \[ \] (.+)$/gm, '<li style="list-style:none">⬜ $1</li>');
+  // lists
+  h = h.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  // wrap consecutive <li> in lists
+  h = h.replace(/(<li>[\s\S]*?<\/li>)(?:\n<li>[\s\S]*?<\/li>)*/g, m => `<ul>${m}</ul>`);
+  // tables
+  h = h.replace(/(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)*)/g, tbl => {
+    const rows = tbl.trim().split('\n');
+    const header = rows[0].split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+    const body = rows.slice(2).map(r => '<tr>' + r.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('') + '</tr>').join('');
+    return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+  });
+  // paragraphs
+  h = h.replace(/\n{2,}/g, '</p><p>');
+  h = '<p>' + h + '</p>';
+  h = h.replace(/<p>\s*(<h[23]>|<ul>|<ol>|<table>|<pre>|<blockquote>)/g, '$1');
+  h = h.replace(/(<\/h[23]>|<\/ul>|<\/ol>|<\/table>|<\/pre>|<\/blockquote>)\s*<\/p>/g, '$1');
+  h = h.replace(/<p>\s*<\/p>/g, '');
+  return h;
+}
+
+// ---- UTILS ----
+function show(id) {
+  ['home-view','view-mode','edit-mode','search-results'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function fmtDate(iso) {
+  try { return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(iso)); }
+  catch(e) { return ''; }
+}
+
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+// ---- INIT ----
+async function init() {
+  await loadPages();
+  showHome();
+}
+
+init();
+</script>
+</body>
+</html>
