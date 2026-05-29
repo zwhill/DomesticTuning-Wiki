@@ -385,6 +385,9 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21V9m0 0l-4 4m4-4l4 4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/></svg>
           Import JSON
         </button>
+        <div style="padding: 8px 8px 0; font-size: 11px; color: var(--text3); letter-spacing: 0.05em;">
+  v<span id="app-version-display"></span>
+</div>
       </div>
     </div>
 
@@ -531,7 +534,7 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
 <script>
 const CLOUDFLARE_PROXY = 'https://cshelper-proxy.zwhill.workers.dev';
 const STORAGE_KEY = 'dt-wiki-pages';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const VERSION_URL = 'https://zwhill.github.io/DomesticTuning-Wiki/version.json';
 
 const BRANDS = ['DiabloSport','Edge Products','SuperChips','Range Technology','General'];
@@ -990,6 +993,7 @@ function toast(msg, type='') {
 async function init() {
   await loadPages();
   showHome();
+  document.getElementById('app-version-display').textContent = APP_VERSION;
 }
 
 // ---- VERSION WATCHER ----
