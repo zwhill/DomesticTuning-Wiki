@@ -343,6 +343,18 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
 #toast.success { border-color: var(--green); }
 #toast.error { border-color: var(--accent); }
 #toast.version { border-color: var(--amber); background: var(--surface2); padding-right: 24px; }
+#loading-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg); align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+#loading-overlay .spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading-overlay p { color: var(--text2); font-size: 14px; letter-spacing: 0.04em; }
 
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
 .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
@@ -389,6 +401,12 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
   v<span id="app-version-display"></span>
 </div>
       </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading wiki...</p>
     </div>
 
     <!-- MAIN -->
@@ -533,9 +551,9 @@ mark { background: rgba(232,32,26,0.25); color: var(--accent2); border-radius: 2
 
 <script>
 const CLOUDFLARE_PROXY = 'https://cshelper-proxy.zwhill.workers.dev';
-const STORAGE_KEY = 'dt-wiki-pages';
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 const VERSION_URL = 'https://zwhill.github.io/DomesticTuning-Wiki/version.json';
+const WIKI_API = 'https://cshelper-proxy.zwhill.workers.dev/wiki/pages';
 
 const BRANDS = ['DiabloSport','Edge Products','SuperChips','Range Technology','General'];
 const BRAND_COLORS = {
@@ -556,66 +574,54 @@ let editingPageId = null;
 let aiOpen = false;
 let aiContext = '';
 
-// ---- STORAGE ----
+// ---- STORAGE (Cloudflare KV via proxy) ----
 async function loadPages() {
   try {
-    const r = await window.storage.get(STORAGE_KEY);
-    if (r && r.value) pages = JSON.parse(r.value);
+    const r = await fetch(WIKI_API);
+    if (!r.ok) throw new Error('fetch failed');
+    pages = await r.json();
   } catch(e) {
-    pages = getSeedPages();
-    await savePages();
-  }
-  if (!pages || pages.length === 0) {
-    pages = getSeedPages();
-    await savePages();
+    pages = [];
+    toast('Could not load wiki pages — check connection', 'error');
   }
 }
 
-async function savePages() {
+async function savePage() {
+  const brand = document.getElementById('edit-brand').value;
+  const title = document.getElementById('edit-title').value.trim();
+  const subtitle = document.getElementById('edit-subtitle').value.trim();
+  const body = document.getElementById('editor').value;
+  if (!title) { toast('Title is required', 'error'); return; }
+  const now = new Date().toISOString();
   try {
-    await window.storage.set(STORAGE_KEY, JSON.stringify(pages));
-  } catch(e) { console.error('Storage save failed', e); }
-}
-
-function getSeedPages() {
-  return [
-    {
-      id: uid(), brand: 'DiabloSport', title: 'Trinity 2 Overview',
-      subtitle: 'Product summary and feature list',
-      body: `## What is the Trinity 2?\n\nThe Trinity 2 (T2) is DiabloSport's flagship tuner and monitor for domestic vehicles. It provides performance tuning, real-time data monitoring, and diagnostic capabilities in one device.\n\n## Key Features\n\n- **Touch screen display** — 2.8\" color touchscreen with intuitive interface\n- **Custom tuning** — Load pre-loaded DiabloSport tunes or upload custom tunes from a licensed tuner\n- **Data logging** — Log up to 20 PIDs simultaneously at configurable sample rates\n- **DTC codes** — Read and clear diagnostic trouble codes\n- **Drag racing tools** — 0-60, 1/8 mile, 1/4 mile timing\n\n## Supported Platforms\n\n| Platform | Years | Notes |\n|---|---|---|\n| GM LS (Gen IV) | 2007–2014 | OBDII port required |\n| Dodge HEMI | 2009–2021 | Full support |\n| Ford Modular | 2011–2020 | Tune unlock required |\n\n## Getting Started\n\n1. Connect the T2 to the OBDII port under the dash\n2. Follow the on-screen setup wizard\n3. Apply a pre-loaded tune or contact your tuner\n\n> **Note:** Always return the vehicle to stock tune before taking it to a dealership for service.`,
-      updated: new Date().toISOString()
-    },
-    {
-      id: uid(), brand: 'DiabloSport', title: 'Common Error Codes',
-      subtitle: 'Troubleshooting guide for device errors',
-      body: `## Error Code Reference\n\nThis page covers the most common error codes seen on DiabloSport devices and how to resolve them.\n\n### E001 – Vehicle Not Supported\n\nThe device does not have a calibration file for the detected vehicle. \n\n**Resolution:** Verify the vehicle year/make/model matches the purchased device. Contact technical support to request a calibration if the vehicle should be supported.\n\n### E002 – Write Failure\n\nThe tune write to the ECU was interrupted or failed.\n\n**Resolution:** \n1. Ensure the battery is fully charged (12.6V minimum)\n2. Do not start the vehicle during the write process\n3. Retry the tune write\n\n### E003 – Device Locked\n\nThe device is locked to another vehicle and cannot be used on a different VIN without unlocking.\n\n**Resolution:** Contact DiabloSport support with proof of purchase. A $50 unlock fee may apply.`,
-      updated: new Date().toISOString()
-    },
-    {
-      id: uid(), brand: 'Edge Products', title: 'Insight CTS3 Quick Start',
-      subtitle: 'Setup and first-use guide',
-      body: `## CTS3 Insight Monitor Setup\n\nThe Edge Insight CTS3 is a standalone data monitor and gauge display. Unlike tuning products, it does not modify ECU calibrations.\n\n## Installation\n\n1. Plug the OBD-II cable into the vehicle's port (typically under the dash, driver's side)\n2. Route the cable to your desired mount location\n3. Power on — the device will auto-detect the vehicle protocol\n\n## Setting Up Gauges\n\nThe CTS3 supports up to 8 configurable gauge screens.\n\n- Tap **Settings → Gauges** to add/remove PIDs\n- Long press any gauge to edit its display range and alert thresholds\n- Use **drag to reorder** to arrange your layout\n\n## Popular PID Configurations\n\n| PID | Recommended Alert |\n|---|---|\n| Engine Coolant Temp | > 220°F |\n| Trans Fluid Temp | > 240°F |\n| Boost Pressure | Varies by tune |\n| AFR (wideband) | < 12.0 or > 15.5 |\n\n## Firmware Updates\n\nConnect the CTS3 to a PC using the included USB cable and launch the **Edge Device Manager** software to check for updates.`,
-      updated: new Date().toISOString()
-    },
-    {
-      id: uid(), brand: 'SuperChips', title: 'Flashpaq F5 FAQ',
-      subtitle: 'Frequently asked questions',
-      body: `## Flashpaq F5 — Frequently Asked Questions\n\n### Q: Can I use one Flashpaq on multiple vehicles?\n\nNo. The Flashpaq F5 locks to the first vehicle it programs. It can be used on a second vehicle only after it is returned to the original vehicle's stock tune and then unlocked through SuperChips support.\n\n### Q: Will the F5 void my warranty?\n\nThe Magnuson-Moss Warranty Act prevents a dealer from voiding your warranty solely because you used an aftermarket part. However, if a dealer can prove a tune contributed to a specific failure, they may deny that specific claim. Always return to stock before warranty service.\n\n### Q: What is the difference between the 91 and 93 octane tunes?\n\nHigher octane tunes advance ignition timing more aggressively, producing more power but requiring higher octane fuel to prevent knock. Never run a 93-octane tune on 87 octane fuel.\n\n### Q: My device says "Vehicle Already Programmed" — what do I do?\n\nThis means the ECU was previously tuned and not returned to stock before the F5 attempted to write. Use a known-good stock file or contact support for recovery options.\n\n### Q: How do I update the device?\n\nDownload **SuperChips Updater** from superchips.com, connect via USB, and follow the on-screen prompts.`,
-      updated: new Date().toISOString()
-    },
-    {
-      id: uid(), brand: 'Range Technology', title: 'AFM/DFM Disabler Overview',
-      subtitle: 'How the disabler works and supported vehicles',
-      body: `## What Does the AFM/DFM Disabler Do?\n\nRange Technology's disabler prevents the engine from entering Active Fuel Management (AFM) or Dynamic Fuel Management (DFM) mode — the cylinder deactivation systems used by GM to improve highway fuel economy.\n\n## Why Disable AFM/DFM?\n\nWhile AFM/DFM improves fuel economy, many owners experience:\n\n- **Lifter failures** — Especially common on Gen V LT engines (5.3L, 6.2L) due to the constant cycling of lifters\n- **Oil consumption** — AFM cylinders can contribute to elevated oil burn\n- **Vibration** — Some drivers notice NVH on cylinder deactivation\n\n## How It Works\n\nThe Range disabler plugs into the OBDII port and sends a continuous signal telling the ECM that AFM/DFM is not available. **It does not modify the ECU calibration** — no tune write occurs.\n\nThis means:\n- ✓ No VIN lock\n- ✓ Can be unplugged at any time\n- ✓ Invisible to dealer scan tools\n- ✓ Does not affect emissions readiness monitors (in most cases)\n\n## Supported Vehicles\n\nCurrently supports GM vehicles with AFM or DFM equipped engines from 2007–2024. See the Range Technology website for the full compatibility list by year/make/model/engine.\n\n> **Note:** DFM (Dynamic Fuel Management, 2019+) uses a more complex 17-pattern cylinder deactivation system and requires Range's V2 disabler or the active version.`,
-      updated: new Date().toISOString()
-    },
-    {
-      id: uid(), brand: 'General', title: 'CS Escalation Process',
-      subtitle: 'When and how to escalate to engineering',
-      body: `## Customer Support Escalation Guide\n\nThis page documents the standard process for escalating customer issues that cannot be resolved at the CS tier.\n\n## Escalation Criteria\n\nEscalate to engineering when:\n\n- Device is bricked or unresponsive after a failed tune write\n- Customer reports an issue on a supported vehicle that affects multiple customers\n- A calibration file appears to be causing consistent drivability issues\n- The customer has a vehicle with a unique ECU variant not in the database\n\n## Escalation Steps\n\n1. **Document the case** — VIN, device serial number, software version, exact error message, and what the customer already tried\n2. **Capture logs** — Ask the customer to pull device logs (Settings → Support → Export Logs) and email them to support@[brand].com\n3. **Submit in Jira** — Create a ticket in the CS → Engineering queue with the tag `[ESCALATION]`\n4. **Set customer expectations** — Let the customer know 2–3 business day turnaround for engineering review\n5. **Follow up** — Check the Jira ticket daily and update the customer proactively\n\n## Contact\n\nFor urgent bricked-device situations (customer has vehicle at shop), use the #engineering-urgent Slack channel for same-day response.`,
-      updated: new Date().toISOString()
+    if (editingPageId) {
+      const updated = { ...pages.find(p => p.id === editingPageId), brand, title, subtitle, body, updated: now };
+      const idx = pages.findIndex(p => p.id === editingPageId);
+      pages[idx] = updated;
+      currentPageId = editingPageId;
+      loadPage(currentPageId);
+      toast('Saving...', '');
+      await fetch(`${WIKI_API}/${editingPageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+    } else {
+      const newP = { id: uid(), brand, title, subtitle, body, updated: now };
+      pages.push(newP);
+      currentPageId = newP.id;
+      loadPage(currentPageId);
+      toast('Saving...', '');
+      await fetch(WIKI_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newP)
+      });
     }
-  ];
+    toast('Page saved ✓', 'success');
+  } catch(e) {
+    toast('Save failed — changes may not persist', 'error');
+  }
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
@@ -726,26 +732,6 @@ function editCurrentPage() {
   show('edit-mode');
 }
 
-async function savePage() {
-  const brand = document.getElementById('edit-brand').value;
-  const title = document.getElementById('edit-title').value.trim();
-  const subtitle = document.getElementById('edit-subtitle').value.trim();
-  const body = document.getElementById('editor').value;
-  if (!title) { toast('Title is required', 'error'); return; }
-  if (editingPageId) {
-    const idx = pages.findIndex(p => p.id === editingPageId);
-    if (idx >= 0) { pages[idx] = { ...pages[idx], brand, title, subtitle, body, updated: new Date().toISOString() }; }
-    currentPageId = editingPageId;
-  } else {
-    const newP = { id: uid(), brand, title, subtitle, body, updated: new Date().toISOString() };
-    pages.push(newP);
-    currentPageId = newP.id;
-  }
-  await savePages();
-  loadPage(currentPageId);
-  toast('Page saved ✓', 'success');
-}
-
 function cancelEdit() {
   if (currentPageId) loadPage(currentPageId);
   else showHome();
@@ -756,12 +742,17 @@ function confirmDelete() {
   document.getElementById('modal-title').textContent = 'Delete Page';
   document.getElementById('modal-body').textContent = 'Are you sure? This cannot be undone.';
   document.getElementById('modal-confirm').onclick = async () => {
-    pages = pages.filter(p => p.id !== currentPageId);
-    await savePages();
+    const idToDelete = currentPageId;
+    pages = pages.filter(p => p.id !== idToDelete);
     currentPageId = null;
     closeModal();
     showHome();
     toast('Page deleted');
+    try {
+      await fetch(`${WIKI_API}/${idToDelete}`, { method: 'DELETE' });
+    } catch(e) {
+      toast('Delete may not have persisted — check connection', 'error');
+    }
   };
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -882,7 +873,6 @@ async function handleImport(input) {
     const imported = JSON.parse(text);
     if (!Array.isArray(imported)) throw new Error('Invalid format');
     pages = imported;
-    await savePages();
     showHome();
     toast(`Imported ${pages.length} pages ✓`, 'success');
   } catch(e) { toast('Import failed: invalid JSON', 'error'); }
@@ -991,7 +981,9 @@ function toast(msg, type='') {
 
 // ---- INIT ----
 async function init() {
+  document.getElementById('loading-overlay').style.display = 'flex';
   await loadPages();
+  document.getElementById('loading-overlay').style.display = 'none';
   showHome();
   document.getElementById('app-version-display').textContent = APP_VERSION;
 }
